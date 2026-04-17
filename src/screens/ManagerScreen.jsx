@@ -38,7 +38,8 @@ export default function ManagerScreen({ storeId }) {
     setEntries(init)
     const saved = revenue[today]?.[storeId]
     if (saved) {
-      setPosRevenue(String(saved.pos || ''))
+      const v = typeof saved === 'number' ? saved : (saved.pos || 0)
+      setPosRevenue(v > 0 ? String(v) : '')
     }
   }, [productions[today]])
 
@@ -101,16 +102,12 @@ export default function ManagerScreen({ storeId }) {
       [today]: { ...(prev[today] || {}), [storeId]: storeData }
     }))
 
-    setRevenue((prev) => ({
-      ...prev,
-      [today]: {
-        ...(prev[today] || {}),
-        [storeId]: {
-          calc: calcRevenue,
-          pos: posRev || undefined
-        }
-      }
-    }))
+    if (posRev > 0) {
+      setRevenue((prev) => ({
+        ...prev,
+        [today]: { ...(prev[today] || {}), [storeId]: posRev }
+      }))
+    }
 
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)

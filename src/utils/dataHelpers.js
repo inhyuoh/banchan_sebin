@@ -54,24 +54,33 @@ export function getLastNDates(endDate, n) {
   return dates
 }
 
-/** revenue[date][storeId]에서 계산 매출 추출 (구형: 숫자, 신형: {calc, pos}) */
-function getStoreRevenue(dayRevenue, storeId) {
-  const v = dayRevenue[storeId]
-  if (!v) return { calc: 0, pos: 0 }
-  if (typeof v === 'number') return { calc: v, pos: v }
-  return { calc: v.calc || 0, pos: v.pos || 0 }
+/** 특정 점포의 계산 매출 (판매팩 × 판매가) */
+function calcStoreRevenue(productions, sales, prices, date, storeId) {
+  const dayItems = productions[date] || []
+  const storeSales = (sales[date] || {})[storeId] || {}
+  return dayItems.reduce((sum, item) => {
+    const e = storeSales[item.id] || {}
+    const sold = Math.max(0, (Number(e.received) || 0) - (Number(e.remaining) || 0) - (Number(e.waste) || 0))
+    return sum + sold * (Number(prices[item.name]) || 0)
+  }, 0)
 }
 
-/** 특정 날짜의 전체 요약 계산 */
-export function calcDaySummary(revenue, ingredients, date) {
-  const dayRevenue = revenue[date] || {}
-  const dangsan = getStoreRevenue(dayRevenue, 'dangsan')
-  const jangseng = getStoreRevenue(dayRevenue, 'jangseng')
-  const dangsanRevenue = dangsan.calc
-  const jangsengRevenue = jangseng.calc
+/** POS 정산액 추출 (구형: 숫자, 신형: {calc, pos} 모두 호환) */
+function getPosRevenue(dayRevenue, storeId) {
+  const v = dayRevenue[storeId]
+  if (!v) return 0
+  if (typeof v === 'number') return v
+  return v.pos || 0
+}
+
+/** 특정 날짜의 전체 요약 계산 (매출은 sales×prices로 직접 계산) */
+export function calcDaySummary(revenue, ingredients, productions, sales, prices, date) {
+  const dangsanRevenue = calcStoreRevenue(productions, sales, prices, date, 'dangsan')
+  const jangsengRevenue = calcStoreRevenue(productions, sales, prices, date, 'jangseng')
   const totalRevenue = dangsanRevenue + jangsengRevenue
-  const dangsanPos = dangsan.pos
-  const jangsengPos = jangseng.pos
+  const dayRevenue = revenue[date] || {}
+  const dangsanPos = getPosRevenue(dayRevenue, 'dangsan')
+  const jangsengPos = getPosRevenue(dayRevenue, 'jangseng')
   const totalPos = dangsanPos + jangsengPos
   const dayIngredients = (ingredients || {})[date] || []
   const totalCost = dayIngredients.reduce((sum, ing) => sum + (ing.cost || 0), 0)
@@ -88,9 +97,9 @@ export function calcDaySummary(revenue, ingredients, date) {
 }
 
 /** 날짜 범위의 순수익 차트 데이터 생성 */
-export function buildChartData(revenue, ingredients, dates) {
+export function buildChartData(revenue, ingredients, productions, sales, prices, dates) {
   return dates.map((date) => {
-    const { profit } = calcDaySummary(revenue, ingredients, date)
+    const { profit } = calcDaySummary(revenue, ingredients, productions, sales, prices, date)
     return {
       date: formatShortDate(date),
       순수익: profit

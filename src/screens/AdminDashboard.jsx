@@ -29,12 +29,14 @@ export default function AdminDashboard() {
   const [sales] = useLocalStorage('banchang_sales', {})
   const [revenue] = useLocalStorage('banchang_revenue', {})
   const [ingredients] = useLocalStorage('banchang_ingredients', {})
-  const summary = calcDaySummary(revenue, ingredients, selectedDate)
+  const [prices] = useLocalStorage('banchang_prices', {})
+
+  const summary = calcDaySummary(revenue, ingredients, productions, sales, prices, selectedDate)
   const todayItems = productions[selectedDate] || []
   const todaySalesAll = sales[selectedDate] || {}
 
   const chartDates = getLastNDates(today, chartMode === 'weekly' ? 7 : 30)
-  const chartData = buildChartData(revenue, ingredients, chartDates)
+  const chartData = buildChartData(revenue, ingredients, productions, sales, prices, chartDates)
 
   function prevDay() { setSelectedDate((d) => addDays(d, -1)) }
   function nextDay() {
