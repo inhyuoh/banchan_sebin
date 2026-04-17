@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts'
 import { useLocalStorage } from '../hooks/useLocalStorage'
 import {
   getToday, formatDate, addDays, formatCurrency,
-  calcDaySummary, buildChartData, getLastNDates, DEFAULT_PRICES
+  calcDaySummary, buildChartData, getLastNDates
 } from '../utils/dataHelpers'
 
 const CustomTooltip = ({ active, payload, label }) => {
@@ -29,28 +29,6 @@ export default function AdminDashboard() {
   const [sales] = useLocalStorage('banchang_sales', {})
   const [revenue] = useLocalStorage('banchang_revenue', {})
   const [ingredients] = useLocalStorage('banchang_ingredients', {})
-  const [prices, setPrices] = useLocalStorage('banchang_prices', DEFAULT_PRICES)
-  const [showPricePanel, setShowPricePanel] = useState(false)
-  const [priceEdits, setPriceEdits] = useState({})
-
-  useEffect(() => {
-    // 기본 가격이 없으면 세팅
-    setPrices((prev) => ({ ...DEFAULT_PRICES, ...prev }))
-  }, [])
-
-  function savePrices() {
-    setPrices((prev) => {
-      const next = { ...prev }
-      Object.entries(priceEdits).forEach(([name, val]) => {
-        const n = Number(val)
-        if (n > 0) next[name] = n
-      })
-      return next
-    })
-    setPriceEdits({})
-    setShowPricePanel(false)
-  }
-
   const summary = calcDaySummary(revenue, ingredients, selectedDate)
   const todayItems = productions[selectedDate] || []
   const todaySalesAll = sales[selectedDate] || {}
@@ -286,44 +264,6 @@ export default function AdminDashboard() {
               <div className="text-sm">해당 날짜의 데이터가 없습니다</div>
             </div>
           )}
-
-          {/* 판매가 관리 */}
-          <div>
-            <button
-              onClick={() => { setShowPricePanel((v) => !v); setPriceEdits({}) }}
-              className="w-full flex items-center justify-between bg-white rounded-2xl px-4 py-3 border border-orange-100 text-sm font-semibold text-orange-700"
-            >
-              <span>💰 메뉴 판매가 관리</span>
-              <span>{showPricePanel ? '▲' : '▼'}</span>
-            </button>
-            {showPricePanel && (
-              <div className="bg-white rounded-2xl border border-orange-100 mt-2 overflow-hidden">
-                <div className="px-4 py-2 text-xs text-gray-400 bg-gray-50 border-b border-gray-100">
-                  메뉴명을 탭해서 가격 수정 가능 · 저장 전까지 반영 안 됨
-                </div>
-                {Object.entries({ ...prices, ...(Object.fromEntries(todayItems.map(i => [i.name, prices[i.name] || 0]))) })
-                  .sort((a, b) => a[0].localeCompare(b[0], 'ko'))
-                  .map(([name, price]) => (
-                    <div key={name} className="flex items-center gap-3 px-4 py-2.5 border-b border-gray-50">
-                      <span className="flex-1 text-sm text-gray-800">{name}</span>
-                      <input
-                        type="number"
-                        value={priceEdits[name] !== undefined ? priceEdits[name] : String(price || '')}
-                        onChange={(e) => setPriceEdits((p) => ({ ...p, [name]: e.target.value }))}
-                        placeholder="0"
-                        className="w-24 border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-center focus:outline-none focus:border-orange-400"
-                      />
-                      <span className="text-xs text-gray-400">원/팩</span>
-                    </div>
-                  ))}
-                <div className="px-4 py-3">
-                  <button onClick={savePrices} className="w-full bg-orange-500 text-white rounded-xl py-2.5 text-sm font-bold">
-                    저장
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
 
           {/* 순수익 그래프 */}
           <div>

@@ -5,6 +5,7 @@ import MotherScreen from './screens/MotherScreen'
 import ManagerScreen from './screens/ManagerScreen'
 import AdminDashboard from './screens/AdminDashboard'
 import SampleGallery from './screens/SampleGallery'
+import PriceManagement from './screens/PriceManagement'
 import BottomTabBar from './components/BottomTabBar'
 
 export default function App() {
@@ -31,6 +32,7 @@ export default function App() {
     if (role === 'gallery') return <SampleGallery role='mother' onBack={() => setRole('mother')} />
     if (role === 'mother') return <MotherScreen />
     if (role === 'dangsan' || role === 'jangseng') return <ManagerScreen storeId={role} />
+    if (role === 'prices') return <PriceManagement />
     if (role === 'admin') return <AdminDashboard />
     return null
   }

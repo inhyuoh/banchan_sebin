@@ -2,6 +2,7 @@ const TABS = [
   { id: 'mother',   label: '어머니',   emoji: '👩‍🍳', color: 'text-green-500' },
   { id: 'dangsan',  label: '당산점',   emoji: '🏪', color: 'text-blue-500' },
   { id: 'jangseng', label: '장승배기', emoji: '🏬', color: 'text-blue-500' },
+  { id: 'prices',   label: '판매가',   emoji: '💰', color: 'text-emerald-500' },
   { id: 'admin',    label: '관리자',   emoji: '📊', color: 'text-orange-500' },
   { id: 'gallery',  label: '갤러리',   emoji: '📸', color: 'text-purple-500' },
 ]
