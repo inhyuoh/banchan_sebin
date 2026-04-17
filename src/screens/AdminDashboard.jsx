@@ -184,6 +184,50 @@ export default function AdminDashboard() {
             </div>
           </div>
 
+          {/* 메뉴별 매출 계산 근거 */}
+          {todayItems.length > 0 && (
+            <div>
+              <div className="text-sm font-semibold text-orange-700 mb-2">💡 매출 계산 근거</div>
+              {['dangsan', 'jangseng'].map((storeId) => {
+                const storeLabel = storeId === 'dangsan' ? '🏪 당산점' : '🏬 장승배기점'
+                const storeSalesData = todaySalesAll[storeId] || {}
+                const storeItems = todayItems.map((item) => {
+                  const e = storeSalesData[item.id] || {}
+                  const received = Number(e.received) || 0
+                  const remaining = Number(e.remaining) || 0
+                  const waste = Number(e.waste) || 0
+                  const sold = Math.max(0, received - remaining - waste)
+                  const price = Number(prices[item.name]) || 0
+                  return { ...item, received, remaining, waste, sold, price, itemRevenue: sold * price }
+                }).filter((i) => i.received > 0 || i.sold > 0)
+                if (storeItems.length === 0) return null
+                return (
+                  <div key={storeId} className="bg-white rounded-2xl border border-orange-100 overflow-hidden mb-2">
+                    <div className="px-3 py-2 text-xs font-bold text-gray-600 bg-gray-50 border-b border-gray-100">{storeLabel}</div>
+                    <div className="grid grid-cols-[1fr_36px_36px_36px_70px] px-3 py-1.5 text-xs text-gray-400 border-b border-gray-50">
+                      <span>메뉴</span>
+                      <span className="text-center">수령</span>
+                      <span className="text-center">남은</span>
+                      <span className="text-center">판매</span>
+                      <span className="text-right">금액</span>
+                    </div>
+                    {storeItems.map((item) => (
+                      <div key={item.id} className="grid grid-cols-[1fr_36px_36px_36px_70px] px-3 py-2 text-sm border-b border-gray-50">
+                        <span className="truncate text-gray-700">{item.name}</span>
+                        <span className="text-center text-gray-500">{item.received}</span>
+                        <span className="text-center text-gray-500">{item.remaining}</span>
+                        <span className="text-center font-medium text-blue-600">{item.sold}</span>
+                        <span className="text-right font-semibold text-green-600">
+                          {item.price > 0 ? `${item.itemRevenue.toLocaleString()}원` : <span className="text-red-400 text-xs">가격미등록</span>}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
           {/* 소분 검증 */}
           {packVerifyData.length > 0 && (
             <div>
