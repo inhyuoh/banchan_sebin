@@ -1,11 +1,12 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts'
 import { useLocalStorage } from '../hooks/useLocalStorage'
 import {
   getToday, formatDate, addDays, formatCurrency,
-  calcDaySummary, buildChartData, getLastNDates
+  calcDaySummary, buildChartData, getLastNDates,
+  calcTheoreticalRevenue, DEFAULT_PRICES
 } from '../utils/dataHelpers'
 
 const CustomTooltip = ({ active, payload, label }) => {
@@ -20,7 +21,7 @@ const CustomTooltip = ({ active, payload, label }) => {
   return null
 }
 
-export default function AdminDashboard({ onRoleChange }) {
+export default function AdminDashboard({ onRoleChange, onGallery }) {
   const today = getToday()
   const [selectedDate, setSelectedDate] = useState(today)
   const [chartMode, setChartMode] = useState('weekly')
@@ -29,6 +30,27 @@ export default function AdminDashboard({ onRoleChange }) {
   const [sales] = useLocalStorage('banchang_sales', {})
   const [revenue] = useLocalStorage('banchang_revenue', {})
   const [ingredients] = useLocalStorage('banchang_ingredients', {})
+  const [prices, setPrices] = useLocalStorage('banchang_prices', DEFAULT_PRICES)
+  const [showPricePanel, setShowPricePanel] = useState(false)
+  const [priceEdits, setPriceEdits] = useState({})
+
+  useEffect(() => {
+    // 기본 가격이 없으면 세팅
+    setPrices((prev) => ({ ...DEFAULT_PRICES, ...prev }))
+  }, [])
+
+  function savePrices() {
+    setPrices((prev) => {
+      const next = { ...prev }
+      Object.entries(priceEdits).forEach(([name, val]) => {
+        const n = Number(val)
+        if (n > 0) next[name] = n
+      })
+      return next
+    })
+    setPriceEdits({})
+    setShowPricePanel(false)
+  }
 
   const summary = calcDaySummary(revenue, ingredients, selectedDate)
   const todayItems = productions[selectedDate] || []
@@ -42,6 +64,14 @@ export default function AdminDashboard({ onRoleChange }) {
     const next = addDays(selectedDate, 1)
     if (next <= today) setSelectedDate(next)
   }
+
+  // 이론 매출 계산
+  const theoreticalDangsan = calcTheoreticalRevenue(productions, sales, prices, selectedDate, 'dangsan')
+  const theoreticalJangseng = calcTheoreticalRevenue(productions, sales, prices, selectedDate, 'jangseng')
+  const theoreticalTotal = theoreticalDangsan + theoreticalJangseng
+  const revenueDiff = summary.revenue - theoreticalTotal
+  const diffRate = theoreticalTotal > 0 ? Math.round(Math.abs(revenueDiff) / theoreticalTotal * 100) : 0
+  const isRevenueSuspicious = theoreticalTotal > 0 && diffRate >= 10
 
   // 메뉴별 폐기 현황
   function getMenuWasteData() {
@@ -74,9 +104,14 @@ export default function AdminDashboard({ onRoleChange }) {
               <div className="text-xs opacity-80 mb-0.5">반찬가게 관리</div>
               <h1 className="text-xl font-bold">📊 관리자 대시보드</h1>
             </div>
-            <button onClick={onRoleChange} className="text-xs bg-white bg-opacity-20 px-3 py-1.5 rounded-full">
-              역할 변경
-            </button>
+            <div className="flex gap-2">
+              <button onClick={onGallery} className="text-xs bg-white bg-opacity-20 px-3 py-1.5 rounded-full">
+                📸 갤러리
+              </button>
+              <button onClick={onRoleChange} className="text-xs bg-white bg-opacity-20 px-3 py-1.5 rounded-full">
+                역할 변경
+              </button>
+            </div>
           </div>
         </div>
 
@@ -113,6 +148,32 @@ export default function AdminDashboard({ onRoleChange }) {
               </div>
             </div>
           </div>
+
+          {/* 이론 vs 실제 매출 비교 */}
+          {theoreticalTotal > 0 && (
+            <div>
+              <div className="text-sm font-semibold text-orange-700 mb-2">🔍 매출 검증</div>
+              <div className={`rounded-2xl p-4 border ${isRevenueSuspicious ? 'bg-red-50 border-red-300' : 'bg-white border-green-200'}`}>
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="text-gray-500">이론 매출 (수량×판매가)</span>
+                  <span className="font-semibold">{formatCurrency(theoreticalTotal)}</span>
+                </div>
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="text-gray-500">실제 매출 (정산액)</span>
+                  <span className="font-semibold">{formatCurrency(summary.revenue)}</span>
+                </div>
+                <div className={`flex justify-between text-sm font-bold pt-2 border-t ${isRevenueSuspicious ? 'border-red-200 text-red-600' : 'border-gray-100 text-green-600'}`}>
+                  <span>{isRevenueSuspicious ? '⚠️ 차이 발생' : '✓ 정상'}</span>
+                  <span>{revenueDiff >= 0 ? '+' : ''}{formatCurrency(revenueDiff)} ({diffRate}%)</span>
+                </div>
+                {isRevenueSuspicious && (
+                  <div className="mt-2 text-xs text-red-500">
+                    이론 매출 대비 {diffRate}% 차이가 납니다. 수량 입력을 확인해주세요.
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* 점포별 매출 */}
           <div>
@@ -178,6 +239,44 @@ export default function AdminDashboard({ onRoleChange }) {
               <div className="text-sm">해당 날짜의 데이터가 없습니다</div>
             </div>
           )}
+
+          {/* 판매가 관리 */}
+          <div>
+            <button
+              onClick={() => { setShowPricePanel((v) => !v); setPriceEdits({}) }}
+              className="w-full flex items-center justify-between bg-white rounded-2xl px-4 py-3 border border-orange-100 text-sm font-semibold text-orange-700"
+            >
+              <span>💰 메뉴 판매가 관리</span>
+              <span>{showPricePanel ? '▲' : '▼'}</span>
+            </button>
+            {showPricePanel && (
+              <div className="bg-white rounded-2xl border border-orange-100 mt-2 overflow-hidden">
+                <div className="px-4 py-2 text-xs text-gray-400 bg-gray-50 border-b border-gray-100">
+                  메뉴명을 탭해서 가격 수정 가능 · 저장 전까지 반영 안 됨
+                </div>
+                {Object.entries({ ...prices, ...(Object.fromEntries(todayItems.map(i => [i.name, prices[i.name] || 0]))) })
+                  .sort((a, b) => a[0].localeCompare(b[0], 'ko'))
+                  .map(([name, price]) => (
+                    <div key={name} className="flex items-center gap-3 px-4 py-2.5 border-b border-gray-50">
+                      <span className="flex-1 text-sm text-gray-800">{name}</span>
+                      <input
+                        type="number"
+                        value={priceEdits[name] !== undefined ? priceEdits[name] : String(price || '')}
+                        onChange={(e) => setPriceEdits((p) => ({ ...p, [name]: e.target.value }))}
+                        placeholder="0"
+                        className="w-24 border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-center focus:outline-none focus:border-orange-400"
+                      />
+                      <span className="text-xs text-gray-400">원/팩</span>
+                    </div>
+                  ))}
+                <div className="px-4 py-3">
+                  <button onClick={savePrices} className="w-full bg-orange-500 text-white rounded-xl py-2.5 text-sm font-bold">
+                    저장
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* 순수익 그래프 */}
           <div>

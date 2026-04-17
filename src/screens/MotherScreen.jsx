@@ -4,7 +4,7 @@ import { getToday, formatDate, generateId } from '../utils/dataHelpers'
 
 const DEFAULT_FAVORITES = ['시금치나물', '콩나물무침', '감자조림', '계란말이', '멸치볶음', '깍두기']
 
-export default function MotherScreen({ onRoleChange }) {
+export default function MotherScreen({ onRoleChange, onGallery }) {
   const today = getToday()
   const [productions, setProductions] = useLocalStorage('banchang_productions', {})
   const [ingredients, setIngredients] = useLocalStorage('banchang_ingredients', {})
@@ -100,12 +100,20 @@ export default function MotherScreen({ onRoleChange }) {
               <div className="text-xs opacity-80 mb-0.5">반찬가게 관리</div>
               <h1 className="text-xl font-bold">👩‍🍳 어머니 화면</h1>
             </div>
-            <button
-              onClick={onRoleChange}
-              className="text-xs bg-white bg-opacity-20 px-3 py-1.5 rounded-full"
-            >
-              역할 변경
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={onGallery}
+                className="text-xs bg-white bg-opacity-20 px-3 py-1.5 rounded-full"
+              >
+                📸 갤러리
+              </button>
+              <button
+                onClick={onRoleChange}
+                className="text-xs bg-white bg-opacity-20 px-3 py-1.5 rounded-full"
+              >
+                역할 변경
+              </button>
+            </div>
           </div>
           <div className="mt-2 text-sm opacity-90">{formatDate(today)} 제조 입력</div>
         </div>
