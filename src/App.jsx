@@ -31,7 +31,7 @@ export default function App() {
   function renderScreen() {
     if (role === 'gallery') return <SampleGallery role='mother' onBack={() => setRole('mother')} />
     if (role === 'mother') return <MotherScreen />
-    if (role === 'dangsan' || role === 'jangseng') return <ManagerScreen storeId={role} />
+    if (role === 'dangsan' || role === 'jangseng') return <ManagerScreen key={role} storeId={role} />
     if (role === 'prices') return <PriceManagement />
     if (role === 'admin') return <AdminDashboard />
     return null
