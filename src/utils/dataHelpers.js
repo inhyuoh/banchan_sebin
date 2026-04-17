@@ -82,6 +82,24 @@ export function buildChartData(revenue, ingredients, dates) {
   })
 }
 
+/** 이론 매출 계산 (소분 - 남은재고 - 폐기) × 판매가 */
+export function calcTheoreticalRevenue(productions, sales, prices, date, storeId) {
+  const dayItems = productions[date] || []
+  const storeSales = (sales[date] || {})[storeId] || {}
+  return dayItems.reduce((sum, item) => {
+    const e = storeSales[item.id] || {}
+    const sold = Math.max(0, (Number(e.received) || 0) - (Number(e.remaining) || 0) - (Number(e.waste) || 0))
+    return sum + sold * (prices[item.name] || 0)
+  }, 0)
+}
+
+/** 기본 판매가 */
+export const DEFAULT_PRICES = {
+  '김치': 8000,
+  '콩나물': 3000,
+  '두부': 3500
+}
+
 /** 고유 ID 생성 */
 export function generateId() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7)

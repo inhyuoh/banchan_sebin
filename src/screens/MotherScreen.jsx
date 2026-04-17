@@ -103,7 +103,7 @@ export default function MotherScreen({ onRoleChange, onGallery }) {
             <div className="flex gap-2">
               <button
                 onClick={onGallery}
-                className="text-xs bg-white bg-opacity-20 px-3 py-1.5 rounded-full"
+                className="text-xs bg-white text-green-600 font-semibold px-3 py-1.5 rounded-full shadow-sm"
               >
                 📸 갤러리
               </button>

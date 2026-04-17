@@ -105,7 +105,7 @@ export default function AdminDashboard({ onRoleChange, onGallery }) {
               <h1 className="text-xl font-bold">📊 관리자 대시보드</h1>
             </div>
             <div className="flex gap-2">
-              <button onClick={onGallery} className="text-xs bg-white bg-opacity-20 px-3 py-1.5 rounded-full">
+              <button onClick={onGallery} className="text-xs bg-white text-orange-600 font-semibold px-3 py-1.5 rounded-full shadow-sm">
                 📸 갤러리
               </button>
               <button onClick={onRoleChange} className="text-xs bg-white bg-opacity-20 px-3 py-1.5 rounded-full">

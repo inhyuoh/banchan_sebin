@@ -41,7 +41,7 @@ const roles = [
   }
 ]
 
-export default function RoleSelect({ onSelect }) {
+export default function RoleSelect({ onSelect, onGallery }) {
   return (
     <div className="min-h-screen bg-amber-50 flex flex-col items-center justify-center px-4">
       <div className="w-full max-w-[430px]">
@@ -71,6 +71,13 @@ export default function RoleSelect({ onSelect }) {
             </button>
           ))}
         </div>
+
+        <button
+          onClick={onGallery}
+          className="mt-4 w-full bg-purple-500 text-white rounded-2xl py-3.5 font-bold text-base shadow-sm active:scale-95 transition-transform flex items-center justify-center gap-2"
+        >
+          <span className="text-xl">📸</span> 담음새 샘플 갤러리
+        </button>
 
         <p className="text-center text-xs text-amber-400 mt-6">
           하나로마트 반찬 납품 관리 시스템
