@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useLocalStorage } from '../hooks/useLocalStorage'
 import { getToday, formatDate, getStoreName, addDays } from '../utils/dataHelpers'
 
-export default function ManagerScreen({ storeId, onRoleChange, onGallery }) {
+export default function ManagerScreen({ storeId }) {
   const today = getToday()
   const yesterday = addDays(today, -1)
   const storeName = getStoreName(storeId)
@@ -109,19 +109,9 @@ export default function ManagerScreen({ storeId, onRoleChange, onGallery }) {
 
         {/* 헤더 */}
         <div className="bg-blue-500 text-white px-4 pt-4 pb-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-xs opacity-80 mb-0.5">반찬가게 관리</div>
-              <h1 className="text-xl font-bold">🏪 {storeName} 점장</h1>
-            </div>
-            <div className="flex gap-2">
-              <button onClick={onGallery} className="text-xs bg-white text-blue-600 font-semibold px-3 py-1.5 rounded-full shadow-sm">
-                📸 갤러리
-              </button>
-              <button onClick={onRoleChange} className="text-xs bg-white bg-opacity-20 px-3 py-1.5 rounded-full">
-                역할 변경
-              </button>
-            </div>
+          <div>
+            <div className="text-xs opacity-80 mb-0.5">반찬가게 관리</div>
+            <h1 className="text-xl font-bold">🏪 {storeName} 점장</h1>
           </div>
           <div className="mt-1.5 text-sm opacity-90">{formatDate(today)}</div>
 

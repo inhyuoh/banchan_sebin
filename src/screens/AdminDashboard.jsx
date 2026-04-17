@@ -21,7 +21,7 @@ const CustomTooltip = ({ active, payload, label }) => {
   return null
 }
 
-export default function AdminDashboard({ onRoleChange, onGallery }) {
+export default function AdminDashboard() {
   const today = getToday()
   const [selectedDate, setSelectedDate] = useState(today)
   const [chartMode, setChartMode] = useState('weekly')
@@ -103,14 +103,6 @@ export default function AdminDashboard({ onRoleChange, onGallery }) {
             <div>
               <div className="text-xs opacity-80 mb-0.5">반찬가게 관리</div>
               <h1 className="text-xl font-bold">📊 관리자 대시보드</h1>
-            </div>
-            <div className="flex gap-2">
-              <button onClick={onGallery} className="text-xs bg-white text-orange-600 font-semibold px-3 py-1.5 rounded-full shadow-sm">
-                📸 갤러리
-              </button>
-              <button onClick={onRoleChange} className="text-xs bg-white bg-opacity-20 px-3 py-1.5 rounded-full">
-                역할 변경
-              </button>
             </div>
           </div>
         </div>

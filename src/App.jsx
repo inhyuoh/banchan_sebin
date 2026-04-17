@@ -5,21 +5,42 @@ import MotherScreen from './screens/MotherScreen'
 import ManagerScreen from './screens/ManagerScreen'
 import AdminDashboard from './screens/AdminDashboard'
 import SampleGallery from './screens/SampleGallery'
+import BottomTabBar from './components/BottomTabBar'
 
 export default function App() {
   const [role, setRole] = useLocalStorage('banchang_role', null)
-  const [showGallery, setShowGallery] = useState(false)
 
-  const handleRoleChange = () => setRole(null)
+  function handleTab(tabId) {
+    if (tabId === 'gallery') {
+      setRole('gallery')
+    } else {
+      setRole(tabId)
+    }
+  }
 
-  if (showGallery)
-    return <SampleGallery role={role} onBack={() => setShowGallery(false)} />
+  if (!role) return <RoleSelect onSelect={setRole} />
 
-  if (!role) return <RoleSelect onSelect={setRole} onGallery={() => setShowGallery(true)} />
-  if (role === 'mother') return <MotherScreen onRoleChange={handleRoleChange} onGallery={() => setShowGallery(true)} />
-  if (role === 'dangsan' || role === 'jangseng')
-    return <ManagerScreen storeId={role} onRoleChange={handleRoleChange} onGallery={() => setShowGallery(true)} />
-  if (role === 'admin') return <AdminDashboard onRoleChange={handleRoleChange} onGallery={() => setShowGallery(true)} />
+  const current = role === 'gallery' ? 'gallery'
+    : role === 'mother' ? 'mother'
+    : role === 'dangsan' ? 'dangsan'
+    : role === 'jangseng' ? 'jangseng'
+    : role === 'admin' ? 'admin'
+    : null
 
-  return <RoleSelect onSelect={setRole} />
+  function renderScreen() {
+    if (role === 'gallery') return <SampleGallery role='mother' onBack={() => setRole('mother')} />
+    if (role === 'mother') return <MotherScreen />
+    if (role === 'dangsan' || role === 'jangseng') return <ManagerScreen storeId={role} />
+    if (role === 'admin') return <AdminDashboard />
+    return null
+  }
+
+  return (
+    <div>
+      <div className="pb-16">
+        {renderScreen()}
+      </div>
+      <BottomTabBar current={current} onChange={handleTab} />
+    </div>
+  )
 }

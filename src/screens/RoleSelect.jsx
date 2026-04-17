@@ -41,18 +41,16 @@ const roles = [
   }
 ]
 
-export default function RoleSelect({ onSelect, onGallery }) {
+export default function RoleSelect({ onSelect }) {
   return (
     <div className="min-h-screen bg-amber-50 flex flex-col items-center justify-center px-4">
       <div className="w-full max-w-[430px]">
-        {/* 헤더 */}
         <div className="text-center mb-8">
           <div className="text-5xl mb-3">🥘</div>
           <h1 className="text-2xl font-bold text-amber-800">반찬가게 관리</h1>
           <p className="text-sm text-amber-600 mt-1">역할을 선택해 주세요</p>
         </div>
 
-        {/* 역할 카드 */}
         <div className="flex flex-col gap-3">
           {roles.map((role) => (
             <button
@@ -71,13 +69,6 @@ export default function RoleSelect({ onSelect, onGallery }) {
             </button>
           ))}
         </div>
-
-        <button
-          onClick={onGallery}
-          className="mt-4 w-full bg-purple-500 text-white rounded-2xl py-3.5 font-bold text-base shadow-sm active:scale-95 transition-transform flex items-center justify-center gap-2"
-        >
-          <span className="text-xl">📸</span> 담음새 샘플 갤러리
-        </button>
 
         <p className="text-center text-xs text-amber-400 mt-6">
           하나로마트 반찬 납품 관리 시스템
