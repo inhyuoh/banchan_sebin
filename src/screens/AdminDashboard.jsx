@@ -93,6 +93,21 @@ export default function AdminDashboard() {
 
   const menuWasteData = getMenuWasteData()
 
+  // 소분 검증 데이터
+  function getPackVerifyData() {
+    return todayItems
+      .filter(item => (item.packed || 0) > 0)
+      .map(item => {
+        const totalReceived = Object.values(todaySalesAll).reduce((sum, storeSales) => {
+          return sum + (storeSales[item.id]?.received || 0)
+        }, 0)
+        const diff = totalReceived - (item.packed || 0)
+        return { ...item, totalReceived, diff }
+      })
+  }
+  const packVerifyData = getPackVerifyData()
+  const hasPackMismatch = packVerifyData.some(i => i.diff !== 0)
+
   return (
     <div className="min-h-screen bg-orange-50">
       <div className="w-full max-w-[430px] mx-auto flex flex-col min-h-screen">
@@ -191,6 +206,49 @@ export default function AdminDashboard() {
               </div>
             </div>
           </div>
+
+          {/* 소분 검증 */}
+          {packVerifyData.length > 0 && (
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <div className="text-sm font-semibold text-orange-700">🔒 소분 수량 검증</div>
+                {hasPackMismatch
+                  ? <span className="text-xs bg-red-100 text-red-600 font-bold px-2 py-0.5 rounded-full">⚠️ 불일치</span>
+                  : <span className="text-xs bg-green-100 text-green-600 font-bold px-2 py-0.5 rounded-full">✓ 일치</span>
+                }
+              </div>
+              <div className="bg-white rounded-2xl border border-orange-100 overflow-hidden">
+                <div className="grid grid-cols-[1fr_52px_52px_60px] px-3 py-2 text-xs text-gray-400 font-medium bg-gray-50 border-b border-gray-100">
+                  <span>메뉴</span>
+                  <span className="text-center">소분</span>
+                  <span className="text-center">수령합계</span>
+                  <span className="text-center">차이</span>
+                </div>
+                {packVerifyData.map((item) => {
+                  const isMissing = item.diff < 0
+                  const isOver = item.diff > 0
+                  return (
+                    <div key={item.id}
+                      className={`grid grid-cols-[1fr_52px_52px_60px] px-3 py-2.5 text-sm border-b border-gray-50 ${isMissing ? 'bg-red-50' : 'bg-white'}`}>
+                      <span className={`font-medium truncate ${isMissing ? 'text-red-700' : 'text-gray-800'}`}>
+                        {isMissing && '⚠️ '}{item.name}
+                      </span>
+                      <span className="text-center text-gray-600">{item.packed}팩</span>
+                      <span className="text-center text-gray-600">{item.totalReceived}팩</span>
+                      <span className={`text-center font-bold ${isMissing ? 'text-red-600' : isOver ? 'text-blue-500' : 'text-green-500'}`}>
+                        {item.diff > 0 ? `+${item.diff}` : item.diff}
+                      </span>
+                    </div>
+                  )
+                })}
+                {hasPackMismatch && (
+                  <div className="px-3 py-2.5 bg-red-50 border-t border-red-100">
+                    <p className="text-xs text-red-600">소분한 수량과 점포 수령 합계가 다릅니다. 확인이 필요합니다.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* 메뉴별 폐기 현황 */}
           {todayItems.length > 0 && (

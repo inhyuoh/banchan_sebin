@@ -24,7 +24,7 @@ export default function MotherScreen() {
   }, [])
 
   function newEmptyItem(name = '') {
-    return { id: generateId(), name }
+    return { id: generateId(), name, packed: '' }
   }
 
   function newEmptyIng(name = '') {
@@ -76,7 +76,7 @@ export default function MotherScreen() {
     }
     const parsedItems = validItems.map((i) => ({
       ...i,
-      quantity: Number(i.quantity) || 0
+      packed: Number(i.packed) || 0
     }))
     const parsedIngs = ingList
       .filter((i) => i.name.trim())
@@ -124,8 +124,9 @@ export default function MotherScreen() {
           {/* 제조 메뉴 목록 */}
           <div>
             <div className="text-sm font-semibold text-green-700 mb-2">🥘 오늘 제조 메뉴</div>
-            <div className="grid grid-cols-[1fr_32px_32px] gap-1 px-1 mb-1 text-xs text-gray-400 font-medium">
+            <div className="grid grid-cols-[1fr_72px_32px_32px] gap-1 px-1 mb-1 text-xs text-gray-400 font-medium">
               <span>메뉴명</span>
+              <span className="text-center">소분(팩)</span>
               <span></span>
               <span></span>
             </div>
@@ -133,13 +134,20 @@ export default function MotherScreen() {
               {items.map((item) => {
                 const isFav = favorites.includes(item.name)
                 return (
-                  <div key={item.id} className="grid grid-cols-[1fr_32px_32px] gap-1 items-center">
+                  <div key={item.id} className="grid grid-cols-[1fr_72px_32px_32px] gap-1 items-center">
                     <input
                       type="text"
                       value={item.name}
                       onChange={(e) => updateItem(item.id, 'name', e.target.value)}
                       placeholder="메뉴명"
                       className="bg-white border border-gray-200 rounded-lg px-2 py-2 text-sm w-full focus:outline-none focus:border-green-400"
+                    />
+                    <input
+                      type="number"
+                      value={item.packed}
+                      onChange={(e) => updateItem(item.id, 'packed', e.target.value)}
+                      placeholder="0"
+                      className="bg-white border border-green-200 rounded-lg px-2 py-2 text-sm text-center w-full focus:outline-none focus:border-green-400"
                     />
                     <button
                       onClick={() => toggleFavorite(item.name)}
@@ -213,6 +221,12 @@ export default function MotherScreen() {
               <div className="flex justify-between text-sm text-gray-600 mb-1">
                 <span>오늘 제조 메뉴 수</span>
                 <span className="font-semibold">{items.filter(i => i.name.trim()).length}가지</span>
+              </div>
+              <div className="flex justify-between text-sm text-gray-600 mb-1">
+                <span>총 소분 팩 수</span>
+                <span className="font-semibold text-green-700">
+                  {items.reduce((s, i) => s + (Number(i.packed) || 0), 0)}팩
+                </span>
               </div>
               <div className="flex justify-between text-sm text-gray-600">
                 <span>오늘 총 재료비</span>
