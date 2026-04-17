@@ -54,20 +54,36 @@ export function getLastNDates(endDate, n) {
   return dates
 }
 
-/** 특정 날짜의 전체 요약 계산 (매출액은 점장이 직접 입력) */
+/** revenue[date][storeId]에서 계산 매출 추출 (구형: 숫자, 신형: {calc, pos}) */
+function getStoreRevenue(dayRevenue, storeId) {
+  const v = dayRevenue[storeId]
+  if (!v) return { calc: 0, pos: 0 }
+  if (typeof v === 'number') return { calc: v, pos: v }
+  return { calc: v.calc || 0, pos: v.pos || 0 }
+}
+
+/** 특정 날짜의 전체 요약 계산 */
 export function calcDaySummary(revenue, ingredients, date) {
   const dayRevenue = revenue[date] || {}
-  const dangsanRevenue = dayRevenue.dangsan || 0
-  const jangsengRevenue = dayRevenue.jangseng || 0
+  const dangsan = getStoreRevenue(dayRevenue, 'dangsan')
+  const jangseng = getStoreRevenue(dayRevenue, 'jangseng')
+  const dangsanRevenue = dangsan.calc
+  const jangsengRevenue = jangseng.calc
   const totalRevenue = dangsanRevenue + jangsengRevenue
+  const dangsanPos = dangsan.pos
+  const jangsengPos = jangseng.pos
+  const totalPos = dangsanPos + jangsengPos
   const dayIngredients = (ingredients || {})[date] || []
   const totalCost = dayIngredients.reduce((sum, ing) => sum + (ing.cost || 0), 0)
   return {
     revenue: totalRevenue,
+    pos: totalPos,
     cost: totalCost,
     profit: totalRevenue - totalCost,
     dangsanRevenue,
-    jangsengRevenue
+    jangsengRevenue,
+    dangsanPos,
+    jangsengPos
   }
 }
 

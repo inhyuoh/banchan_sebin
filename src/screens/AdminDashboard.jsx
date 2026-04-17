@@ -5,8 +5,7 @@ import {
 import { useLocalStorage } from '../hooks/useLocalStorage'
 import {
   getToday, formatDate, addDays, formatCurrency,
-  calcDaySummary, buildChartData, getLastNDates,
-  calcTheoreticalRevenue, DEFAULT_PRICES
+  calcDaySummary, buildChartData, getLastNDates, DEFAULT_PRICES
 } from '../utils/dataHelpers'
 
 const CustomTooltip = ({ active, payload, label }) => {
@@ -64,14 +63,6 @@ export default function AdminDashboard() {
     const next = addDays(selectedDate, 1)
     if (next <= today) setSelectedDate(next)
   }
-
-  // 이론 매출 계산
-  const theoreticalDangsan = calcTheoreticalRevenue(productions, sales, prices, selectedDate, 'dangsan')
-  const theoreticalJangseng = calcTheoreticalRevenue(productions, sales, prices, selectedDate, 'jangseng')
-  const theoreticalTotal = theoreticalDangsan + theoreticalJangseng
-  const revenueDiff = summary.revenue - theoreticalTotal
-  const diffRate = theoreticalTotal > 0 ? Math.round(Math.abs(revenueDiff) / theoreticalTotal * 100) : 0
-  const isRevenueSuspicious = theoreticalTotal > 0 && diffRate >= 10
 
   // 메뉴별 폐기 현황
   function getMenuWasteData() {
@@ -156,29 +147,36 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          {/* 이론 vs 실제 매출 비교 */}
-          {theoreticalTotal > 0 && (
+          {/* POS vs 계산 매출 비교 */}
+          {summary.revenue > 0 && summary.pos > 0 && (
             <div>
               <div className="text-sm font-semibold text-orange-700 mb-2">🔍 매출 검증</div>
-              <div className={`rounded-2xl p-4 border ${isRevenueSuspicious ? 'bg-red-50 border-red-300' : 'bg-white border-green-200'}`}>
-                <div className="flex justify-between text-sm mb-2">
-                  <span className="text-gray-500">이론 매출 (수량×판매가)</span>
-                  <span className="font-semibold">{formatCurrency(theoreticalTotal)}</span>
-                </div>
-                <div className="flex justify-between text-sm mb-2">
-                  <span className="text-gray-500">실제 매출 (정산액)</span>
-                  <span className="font-semibold">{formatCurrency(summary.revenue)}</span>
-                </div>
-                <div className={`flex justify-between text-sm font-bold pt-2 border-t ${isRevenueSuspicious ? 'border-red-200 text-red-600' : 'border-gray-100 text-green-600'}`}>
-                  <span>{isRevenueSuspicious ? '⚠️ 차이 발생' : '✓ 정상'}</span>
-                  <span>{revenueDiff >= 0 ? '+' : ''}{formatCurrency(revenueDiff)} ({diffRate}%)</span>
-                </div>
-                {isRevenueSuspicious && (
-                  <div className="mt-2 text-xs text-red-500">
-                    이론 매출 대비 {diffRate}% 차이가 납니다. 수량 입력을 확인해주세요.
+              {(() => {
+                const diff = summary.pos - summary.revenue
+                const rate = Math.round(Math.abs(diff) / summary.revenue * 100)
+                const mismatch = rate >= 5
+                return (
+                  <div className={`rounded-2xl p-4 border ${mismatch ? 'bg-red-50 border-red-300' : 'bg-white border-green-200'}`}>
+                    <div className="flex justify-between text-sm mb-2">
+                      <span className="text-gray-500">계산 매출 (판매팩×판매가)</span>
+                      <span className="font-semibold">{formatCurrency(summary.revenue)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm mb-2">
+                      <span className="text-gray-500">POS 정산액</span>
+                      <span className="font-semibold">{formatCurrency(summary.pos)}</span>
+                    </div>
+                    <div className={`flex justify-between text-sm font-bold pt-2 border-t ${mismatch ? 'border-red-200 text-red-600' : 'border-gray-100 text-green-600'}`}>
+                      <span>{mismatch ? '⚠️ 차이 발생' : '✓ 일치'}</span>
+                      <span>{diff >= 0 ? '+' : ''}{formatCurrency(diff)} ({rate}%)</span>
+                    </div>
+                    {mismatch && (
+                      <div className="mt-2 text-xs text-red-500">
+                        계산 매출 대비 POS 정산액이 {rate}% 차이납니다. 확인이 필요합니다.
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
+                )
+              })()}
             </div>
           )}
 
@@ -186,24 +184,23 @@ export default function AdminDashboard() {
           <div>
             <div className="text-sm font-semibold text-orange-700 mb-2">점포별 매출</div>
             <div className="grid grid-cols-2 gap-2">
-              <div className="bg-white rounded-2xl p-4 border border-blue-100">
-                <div className="text-xs text-gray-500 mb-1">🏪 당산점</div>
-                <div className="font-bold text-gray-800">{formatCurrency(summary.dangsanRevenue)}</div>
-                {summary.revenue > 0 && (
-                  <div className="text-xs text-gray-400 mt-1">
-                    {Math.round(summary.dangsanRevenue / summary.revenue * 100)}%
-                  </div>
-                )}
-              </div>
-              <div className="bg-white rounded-2xl p-4 border border-blue-100">
-                <div className="text-xs text-gray-500 mb-1">🏬 장승배기점</div>
-                <div className="font-bold text-gray-800">{formatCurrency(summary.jangsengRevenue)}</div>
-                {summary.revenue > 0 && (
-                  <div className="text-xs text-gray-400 mt-1">
-                    {Math.round(summary.jangsengRevenue / summary.revenue * 100)}%
-                  </div>
-                )}
-              </div>
+              {[
+                { label: '🏪 당산점', calc: summary.dangsanRevenue, pos: summary.dangsanPos },
+                { label: '🏬 장승배기점', calc: summary.jangsengRevenue, pos: summary.jangsengPos }
+              ].map(({ label, calc, pos }) => (
+                <div key={label} className="bg-white rounded-2xl p-4 border border-blue-100">
+                  <div className="text-xs text-gray-500 mb-1">{label}</div>
+                  <div className="font-bold text-gray-800">{formatCurrency(calc)}</div>
+                  {pos > 0 && pos !== calc && (
+                    <div className="text-xs text-gray-400 mt-1">POS {formatCurrency(pos)}</div>
+                  )}
+                  {summary.revenue > 0 && (
+                    <div className="text-xs text-blue-400 mt-1">
+                      {Math.round(calc / summary.revenue * 100)}%
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
 
